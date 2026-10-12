@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SM2K Co-op</title>
+<meta name="description" content="Фанатский кооперативный мод для Spider-Man (2000, PC): разделённый экран на одном компьютере или игра по сети через LAN и Radmin VPN. Открытый код, MIT.">
+<!-- Optional: set the repository explicitly, e.g. content="https://github.com/you/sm2k-coop".
+     Left empty, it is worked out from the GitHub Pages address (you.github.io/sm2k-coop). -->
+<meta name="repo" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23B01818'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%230C1030'/%3E%3Crect x='4' y='5' width='8' height='2' fill='%23fff'/%3E%3Crect x='4' y='9' width='5' height='2' fill='%23FFD040'/%3E%3C/svg%3E">
+<style>
+:root {
+  --page: #E7EAF3;
+  --ink: #131838;
+  --ink-soft: #444B73;
+  --rule: #C5CBE0;
+  --red: #B01818;
+  --red-ink: #9A1414;
+  --navy: #0C1030;
+  --band: #1A2C78;
+  --lav: #A8B4E0;
+  --gold: #FFD040;
+  --code-bg: #DCE0EE;
+  --shadow: #0C1030;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0B0E26;
+    --ink: #E3E7F7;
+    --ink-soft: #A8B0D4;
+    --rule: #262D5C;
+    --red: #D02828;
+    --red-ink: #FF7A6E;
+    --code-bg: #161B42;
+    --shadow: #000000;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0B0E26; --ink: #E3E7F7; --ink-soft: #A8B0D4; --rule: #262D5C;
+  --red: #D02828; --red-ink: #FF7A6E; --code-bg: #161B42; --shadow: #000000;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 17px/1.6 "Golos Text", system-ui, sans-serif;
+}
+a { color: var(--red-ink); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0; }
+.brand { font: 700 18px/1 "Unbounded", sans-serif; color: var(--ink); text-decoration: none; letter-spacing: .01em; }
+.brand b { color: var(--red-ink); font-weight: 700; }
+.top nav { display: flex; gap: 20px; flex-wrap: wrap; font-size: 15px; }
+.top nav a { color: var(--ink-soft); text-decoration: none; }
+.top nav a:hover { color: var(--ink); text-decoration: underline; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 5fr 7fr; gap: 56px; align-items: center; padding: 40px 0 72px; }
+h1 {
+  font: 700 clamp(34px, 5.2vw, 60px)/1.05 "Unbounded", sans-serif;
+  letter-spacing: -.02em; margin: 0 0 22px; text-wrap: balance;
+}
+.lede { font-size: 19px; color: var(--ink-soft); margin: 0 0 30px; max-width: 34ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-block; padding: 14px 22px; font: 600 16px/1 "Golos Text", sans-serif; text-decoration: none;
+  border: 2px solid var(--red); border-radius: 2px;
+}
+.btn-main { background: var(--red); color: #fff; box-shadow: 4px 4px 0 var(--shadow); }
+.btn-main:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--shadow); }
+.btn-alt { color: var(--ink); border-color: var(--ink-soft); }
+.btn-alt:hover { border-color: var(--ink); }
+.small { font-size: 14px; color: var(--ink-soft); margin-top: 18px; }
+
+.screen { margin: 0; }
+.screen canvas {
+  display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges;
+  box-shadow: 10px 10px 0 var(--shadow);
+}
+.screen figcaption { font-size: 14px; color: var(--ink-soft); margin-top: 18px; }
+.screen figcaption kbd { font: 600 13px/1 "Golos Text", sans-serif; border: 1px solid var(--ink-soft); padding: 2px 5px; border-radius: 2px; }
+
+/* sections */
+section { padding: 56px 0; border-top: 1px solid var(--rule); }
+h2 { font: 500 clamp(24px, 3vw, 32px)/1.15 "Unbounded", sans-serif; margin: 0 0 26px; letter-spacing: -.01em; }
+h3 { font: 600 19px/1.3 "Golos Text", sans-serif; margin: 0 0 8px; }
+p { margin: 0 0 14px; max-width: 68ch; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.cols > *, .hero > *, .mode > * { min-width: 0; }
+
+.modes { display: grid; gap: 0; }
+.mode { display: grid; grid-template-columns: 220px 1fr; gap: 28px; padding: 22px 0; border-bottom: 1px solid var(--rule); }
+.mode:first-child { padding-top: 0; }
+.mode .state { font-size: 14px; font-weight: 600; margin-top: 6px; }
+.state.ok { color: var(--ink); }
+.state.test { color: var(--red-ink); }
+.state.plan { color: var(--ink-soft); }
+.mode p { margin: 0; }
+
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; max-width: 68ch; }
+ol.steps li { counter-increment: s; position: relative; padding: 0 0 18px 52px; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: -2px; width: 34px; height: 34px;
+  background: var(--navy); color: #fff; font: 700 16px/34px "Unbounded", sans-serif; text-align: center;
+}
+code, kbd { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 2px; }
+pre { white-space: pre-wrap; word-break: break-word; background: var(--code-bg); padding: 14px 16px; overflow-x: auto; border-radius: 2px; font-size: 14px; max-width: 100%; }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; color: var(--ink-soft); }
+.table-scroll { overflow-x: auto; }
+
+.note { border-left: 4px solid var(--red); padding: 4px 0 4px 18px; }
+footer { padding: 40px 0 56px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-soft); }
+footer p { max-width: 90ch; }
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 16px; }
+  .cols { grid-template-columns: 1fr; gap: 24px; }
+  .mode { grid-template-columns: 1fr; gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-main:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#">SM2K <b>Co-op</b></a>
+    <nav aria-label="Разделы">
+      <a href="#install">Установка</a>
+      <a href="#network">По сети</a>
+      <a href="#controls">Управление</a>
+      <a data-repo-link="" href="#">GitHub</a>
+      <a data-repo-link="/blob/main/README.md" href="#" lang="en">English</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>Spider-Man 2000 года — теперь вдвоём</h1>
+        <p class="lede">Фанатский мод для PC-версии игры. Разделённый экран на одном компьютере или игра по сети через LAN и Radmin VPN.</p>
+        <div class="actions">
+          <a class="btn btn-main" data-repo-link="/releases/latest" href="#">Скачать v0.12</a>
+          <a class="btn btn-alt" data-repo-link="" href="#">Исходный код</a>
+        </div>
+        <p class="small">Бесплатно, открытый код, лицензия MIT. Нужна своя копия игры версии 1.3.</p>
+      </div>
+      <figure class="screen">
+        <canvas id="menu" width="580" height="460" role="img"
+          aria-label="Меню мода в игре: пункты Player 2, Split screen, LAN co-op и другие. В демонстрации выбирается пункт LAN CO-OP, режим переключается на HOST, и в строке состояния появляется подключённый напарник."></canvas>
+        <figcaption>Меню мода. В игре открывается клавишей <kbd>F6</kbd>, здесь нарисовано тем же шрифтом.</figcaption>
+      </figure>
+    </div>
+
+    <section aria-labelledby="modes-h">
+      <h2 id="modes-h">Как играть</h2>
+      <div class="modes">
+        <div class="mode">
+          <div><h3>Один компьютер</h3><div class="state ok">Играбельно</div></div>
+          <p>Второй Человек-паук со своей камерой, своим HUD в стиле игры и своим здоровьем, которое сохраняется между уровнями. Клавиатура или геймпад. Враги нападают на обоих. Упавший второй игрок ждёт минуту: подойдите и удерживайте Num0, чтобы его поднять.</p>
+        </div>
+        <div class="mode">
+          <div><h3>Два компьютера</h3><div class="state test">Тестируется</div></div>
+          <p>Каждый играет на своём ПК и видит напарника. Общие смерти врагов, двери и скрипты уровня, переход на следующий уровень, рестарт и провал миссии. Работает по домашней сети и через Radmin VPN, ZeroTier, Tailscale.</p>
+        </div>
+        <div class="mode">
+          <div><h3>Противостояние</h3><div class="state plan">В планах</div></div>
+          <p>Арены из испытаний и сюжетных уровней без скриптов. Каждый сам за себя, команды, захват флага.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" aria-labelledby="install-h">
+      <h2 id="install-h">Установка</h2>
+      <ol class="steps">
+        <li>Скачайте архив <code>sm2k-coop-v0.12-win32.zip</code> со <a data-repo-link="/releases/latest" href="#">страницы релиза</a>.</li>
+        <li>Скопируйте <code>dinput8.dll</code> и, если хотите задать ник, <code>coop.ini</code> в папку игры, рядом с <code>SpideyPC.exe</code>.</li>
+        <li>Запустите игру, загрузите уровень и нажмите <kbd>F6</kbd>. Второй игрок появится сам через пару секунд.</li>
+      </ol>
+      <p>Чтобы удалить мод, удалите <code>dinput8.dll</code>. Если версия игры другая, мод это увидит и ничего не тронет; причина будет записана в <code>coop_log.txt</code>.</p>
+    </section>
+
+    <section id="network" aria-labelledby="net-h">
+      <h2 id="net-h">Игра по сети</h2>
+      <div class="cols">
+        <div>
+          <h3>Тот, кто принимает</h3>
+          <p>В меню <kbd>F6</kbd> поставьте <code>LAN CO-OP</code> на <code>HOST</code>. Сообщите другу свой IP: в Radmin VPN он вида <code>26.x.x.x</code>, дома — <code>192.168.x.x</code> из команды <code>ipconfig</code>.</p>
+          <p>Если Windows спросит про доступ к сети для <code>SpideyPC.exe</code>, разрешите. Если окна не было:</p>
+          <pre><code>netsh advfirewall firewall add rule name="SM2K Co-op" dir=in action=allow protocol=UDP localport=27016</code></pre>
+        </div>
+        <div>
+          <h3>Тот, кто подключается</h3>
+          <p>Выберите <code>HOST IP</code>, нажмите Enter, наберите адрес друга и снова Enter. Потом <code>LAN CO-OP</code> → <code>JOIN</code>.</p>
+          <div class="table-scroll">
+          <table>
+            <thead><tr><th>Строка состояния</th><th>Что это значит</th></tr></thead>
+            <tbody>
+              <tr><td><code>OK: PETER</code></td><td>связь есть, вы на одном уровне</td></tr>
+              <tr><td><code>PETER ON L1A2-T</code></td><td>напарник на другом уровне: выберите <code>GO TO PARTNER</code></td></tr>
+              <tr><td><code>CONNECTING...</code></td><td>ответа нет: проверьте IP и брандмауэр у хоста</td></tr>
+              <tr><td><code>OTHER MOD VERSION</code></td><td>у вас разные версии мода</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="controls" aria-labelledby="ctl-h">
+      <h2 id="ctl-h">Управление</h2>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Кто</th><th>Клавиатура</th><th>Геймпад</th></tr></thead>
+        <tbody>
+          <tr><td>Игрок 1</td><td colspan="2">управление самой игры</td></tr>
+          <tr><td>Игрок 2</td><td>W A S D — ходьба, K — прыжок, J — рука, L — нога, I — паутина, U P O — доп. действия</td><td>стик, A — прыжок, B — нога, X — рука, Y — паутина, LB RB RT — доп. действия</td></tr>
+          <tr><td>Мод</td><td colspan="2">F6 — меню, F8 — разделение экрана, F7 — раскладка, F9 и F11 — добавить и убрать игрока 2, F10 — перенести его к первому, Num0 удерживать рядом с упавшим — поднять</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="ai-h">
+      <div class="cols">
+        <div>
+          <h2 id="ai-h">Сделано с помощью ИИ</h2>
+          <p>Код мода, разбор устройства игры и эти тексты написаны ИИ-ассистентом Claude (Anthropic) по заданию автора. Автор тестировал каждую сборку в игре и присылал логи. Сетевой код дополнительно проверил второй, независимый проход ИИ.</p>
+          <p>Ошибки возможны. Если что-то не работает, приложите <code>coop_log.txt</code> к <a data-repo-link="/issues/new/choose" href="#">сообщению об ошибке</a>.</p>
+        </div>
+        <div>
+          <h2>Антивирус и безопасность</h2>
+          <p class="note">Мод подменяет системную DLL и меняет код игры в памяти. Антивирусы иногда принимают такое за вирус.</p>
+          <p>Поэтому DLL собирается на GitHub из открытого кода, а сборка воспроизводима: можно собрать самому и сравнить хеш с <code>SHA256SUMS.txt</code>. Мод ничего не скачивает и выходит в сеть только в режиме LAN, по адресу, который вы ввели.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="dev-h">
+      <h2 id="dev-h">Доработать может любой</h2>
+      <p>Весь мод — один файл на C. Берите, меняйте, выкладывайте свои версии: лицензия MIT это разрешает. Как собрать и куда смотреть, написано в <a data-repo-link="/blob/main/CONTRIBUTING.md" href="#">CONTRIBUTING</a> и <a data-repo-link="/blob/main/docs/ARCHITECTURE.md" href="#">ARCHITECTURE</a>. Ближайшие планы — в <a data-repo-link="/blob/main/docs/ROADMAP.md" href="#">ROADMAP</a>: урон и спасение по сети, костюм напарника, режим противостояния.</p>
+      <p>Единственное строгое правило: никаких файлов игры, exe и декомпилированного кода в репозитории.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>SM2K Co-op — неофициальный фанатский проект. Он не связан с Marvel, Activision и другими правообладателями игры и не одобрен ими. Spider-Man — товарный знак Marvel; название игры здесь только указывает, с чем работает мод. В проекте нет файлов игры: нужна своя копия. <a data-repo-link="/blob/main/docs/LEGAL.md" href="#">Правовая информация</a>.</p>
+    <p>Код: лицензия MIT. Сделано с помощью Claude (Anthropic).</p>
+  </footer>
+</div>
+<script>
+const FONT_CHARS=" !%()+-./0123456789:<>ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const FONT=["00000000000000", "04040404040004", "18190204081303", "02040808080402", "08040202020408", "0004041f040400", "0000000e000000", "00000000000c0c", "01010204081010", "0e11131519110e", "040c040404040e", "0e11010204081f", "1f02040201110e", "02060a121f0202", "1f101e0101110e", "0608101e11110e", "1f010204080808", "0e11110e11110e", "0e11110f01020c", "00040400040400", "02040810080402", "08040201020408", "0e11111f111111", "1e11111e11111e", "0e11101010110e", "1e11111111111e", "1f10101e10101f", "1f10101e101010", "0e11101711110f", "1111111f111111", "0e04040404040e", "0702020202120c", "11121418141211", "1010101010101f", "111b1515111111", "11111915131111", "0e11111111110e", "1e11111e101010", "0e11111115120d", "1e11111e141211", "0f10100e01011e", "1f040404040404", "1111111111110e", "11111111110a04", "1111111515150a", "11110a040a1111", "11110a04040404", "1f01020408101f"];
+/* ---- links to the repository ---- */
+(function () {
+  var meta = document.querySelector('meta[name="repo"]');
+  var base = meta && meta.content.trim() ? meta.content.trim().replace(/\/$/, '') : '';
+  var exact = !!base;
+  if (!base && /\.github\.io$/.test(location.hostname)) {
+    var owner = location.hostname.split('.')[0];
+    var seg = location.pathname.split('/').filter(Boolean)[0];
+    base = 'https://github.com/' + owner + '/' + (seg && seg.indexOf('.') < 0 ? seg : location.hostname);
+    exact = true;
+  }
+  if (!base) base = 'https://github.com/search?q=sm2k-coop&type=repositories';
+  document.querySelectorAll('[data-repo-link]').forEach(function (a) {
+    a.href = exact ? base + a.getAttribute('data-repo-link') : base;
+  });
+})();
+
+/* ---- the mod's F6 menu, drawn like DrawCoopMenu() in src/dinput8.c ---- */
+(function () {
+  var cv = document.getElementById('menu');
+  if (!cv || !cv.getContext) return;
+  var S = 2, PW = 280, LH = 11, ITEMS = 14, PH = (ITEMS + 6) * LH + 10, X0 = 3, Y0 = 3;
+  cv.width = (PW + 6) * S; cv.height = (PH + 6) * S;
+  var g = cv.getContext('2d');
+  var C = { frame: '#B01818', panel: '#0C1030', band: '#1A2C78', white: '#FFFFFF', gold: '#FFD040',
+            label: '#A8B4E0', value: '#E0E0E0', foot: '#7080B0' };
+  function box(x0, y0, x1, y1, c) { g.fillStyle = c; g.fillRect(x0 * S, y0 * S, (x1 - x0) * S, (y1 - y0) * S); }
+  function text(x, y, s, c) {
+    g.fillStyle = c;
+    for (var i = 0; i < s.length; i++, x += 6) {
+      var k = FONT_CHARS.indexOf(s[i]); if (k <= 0) continue;
+      var rows = FONT[k];
+      for (var r = 0; r < 7; r++) {
+        var bits = parseInt(rows.substr(r * 2, 2), 16);
+        for (var b = 4; b >= 0; b--) if (bits & (1 << b)) g.fillRect((x + 4 - b) * S, (y + r) * S, S, S);
+      }
+    }
+  }
+  function items(st) {
+    return [
+      ['PLAYER 2', st.lan ? '(OFF IN LAN MODE)' : '< REMOVE >'],
+      ['SPLIT SCREEN', '< ON >'],
+      ['LAYOUT', '< TOP / BOTTOM >'],
+      ['P2 HUD', '< GAME STYLE >'],
+      ['REVIVE TIME', '< 60 S >'],
+      ['P2 BLEEDS OUT', '< MISSION FAILED >'],
+      ['AUTO SPAWN P2', '< ON >'],
+      ['P2 GAMEPAD', '< OFF (KEYBOARD) >'],
+      ['LAN CO-OP', st.lan ? '< HOST >' : '< OFF >'],
+      ['HOST IP', '26.0.0.1  (ENTER: EDIT)'],
+      ['PORT', '< 27016 >'],
+      ['SYNC ENEMIES', '< ON >'],
+      ['GO TO PARTNER', st.lan ? '(ENTER: LOAD HIS LEVEL)' : '-'],
+      ['CLOSE MENU', '']
+    ];
+  }
+  function draw(st) {
+    g.clearRect(0, 0, cv.width, cv.height);
+    box(X0 - 3, Y0 - 3, X0 + PW + 3, Y0 + PH + 3, C.frame);
+    box(X0, Y0, X0 + PW, Y0 + PH, C.panel);
+    box(X0, Y0, X0 + PW, Y0 + LH + 4, C.band);
+    text(X0 + 8, Y0 + 3, 'SPIDER-MAN CO-OP  V0.12', C.white);
+    var status = !st.lan ? 'PLAYER 2: 200 / 200 HP' : (st.peer ? 'LAN HOST: OK: PETER' : 'LAN HOST: WAITING FOR PLAYER');
+    text(X0 + 8, Y0 + LH + 8, status, C.gold);
+    items(st).forEach(function (it, i) {
+      var y = Y0 + (i + 2) * LH + 12, sel = i === st.sel;
+      if (sel) box(X0 + 4, y - 2, X0 + PW - 4, y + 9, C.frame);
+      text(X0 + 10, y, it[0], sel ? C.white : C.label);
+      if (it[1]) text(X0 + 120, y, it[1], sel ? C.white : C.value);
+    });
+    text(X0 + 8, Y0 + PH - 2 * LH - 2, st.lan ? 'NICK AND HOST IP: COOP.INI OR THIS MENU' : 'PVP MODE: IN DEVELOPMENT', C.foot);
+    text(X0 + 8, Y0 + PH - LH, 'UP/DOWN  LEFT/RIGHT  ENTER   F6 CLOSE', C.foot);
+  }
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (still) { draw({ sel: 8, lan: true, peer: true }); return; }
+  /* one demo: walk down to LAN CO-OP, switch to HOST, the partner connects */
+  var steps = [];
+  for (var i = 0; i <= 8; i++) steps.push([{ sel: i, lan: false, peer: false }, i === 0 ? 1400 : 260]);
+  steps.push([{ sel: 8, lan: true, peer: false }, 1800]);
+  steps.push([{ sel: 8, lan: true, peer: true }, 4200]);
+  var n = 0;
+  (function tick() { var s = steps[n]; draw(s[0]); n = (n + 1) % steps.length; setTimeout(tick, s[1]); })();
+})();
+</script>
+</body>
+</html>

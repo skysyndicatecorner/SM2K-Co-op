@@ -1,0 +1,32 @@
+; SM2K Co-op settings. The mod creates coop.ini next to SpideyPC.exe by itself;
+; this file only shows every key. All of them can also be changed in the F6 menu.
+
+[coop]
+; split-screen for two players on one PC: 1 on, 0 off
+split=1
+; 0 top/bottom, 1 left/right, 2 left/right keep aspect, 3 top/bottom keep aspect
+layout=0
+; player 2 HUD: 1 = the game's own HUD, 0 = simple bars
+p2_hud_game=1
+; seconds a downed player 2 can wait for help (30..120)
+revive_secs=60
+; when nobody helped in time: 1 = mission failed, 0 = player 2 gets up next to player 1
+death_mode=1
+; create player 2 automatically when a level starts
+auto_spawn=1
+; player 2 uses the first XInput gamepad instead of the keyboard
+p2_gamepad=0
+
+[lan]
+; network co-op: 0 off, 1 host, 2 join
+mode=0
+; join: the host's address (LAN 192.168.x.x or Radmin VPN 26.x.x.x)
+host_ip=26.0.0.1
+; UDP port, the same on both PCs
+port=27016
+; your name for the partner: Latin capitals, digits, up to 15 characters
+nick=PLAYER
+; sync enemy deaths and trigger zones
+sync_world=1
+; sync level end, restart and mission failed
+sync_level=1
